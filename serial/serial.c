@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 #include <time.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_rng.h>
@@ -46,6 +47,10 @@ main (void)
   // A documentação usa 500000; aumentamos para que o tempo seja mensurável
   size_t calls = 10000000;
 
+  // Sem GSL_RNG_SEED no ambiente, a semente é sempre a padrão (0), então a
+  // execução serial é reprodutível. Na versão MPI, cada rank DEVE receber uma
+  // semente diferente (ex.: gsl_rng_set (r, semente_base + rank)); caso
+  // contrário, todos geram a mesma sequência e não há ganho estatístico.
   gsl_rng_env_setup ();
   T = gsl_rng_default;
   r = gsl_rng_alloc (T);
@@ -53,15 +58,16 @@ main (void)
   {
     gsl_monte_plain_state *s = gsl_monte_plain_alloc (1);
 
-    // Marca o relógio antes e depois do cálculo
-    clock_t inicio = clock ();
+    // Marca o relógio antes e depois do cálculo (tempo de parede, comparável ao MPI_Wtime)
+    struct timespec t0, t1;
+    clock_gettime (CLOCK_MONOTONIC, &t0);
     gsl_monte_plain_integrate (&G, xl, xu, 1, calls, r, s, &res, &err);
-    clock_t fim = clock ();
+    clock_gettime (CLOCK_MONOTONIC, &t1);
 
     gsl_monte_plain_free (s);
     display_results ("plain", res, err);
 
-    printf ("tempo  = %.3f s\n", (double) (fim - inicio) / CLOCKS_PER_SEC);
+    printf ("tempo  = %.3f s\n", (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / 1e9);
   }
 
   gsl_rng_free (r);
