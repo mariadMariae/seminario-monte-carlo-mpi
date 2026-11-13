@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="480" font-family="sans-serif" font-size="13"><rect width="680" height="480" fill="white"/>
+<text x="340" y="28" text-anchor="middle" font-size="17" font-weight="bold">Tempo serial médio por número de avaliações</text>
+<line x1='80' y1='380' x2='600' y2='380' stroke='#ccc'/><text x='72' y='384' text-anchor='end'>0</text>
+<line x1='80' y1='332.857142857143' x2='600' y2='332.857142857143' stroke='#ccc'/><text x='72' y='336.857142857143' text-anchor='end'>1</text>
+<line x1='80' y1='285.714285714286' x2='600' y2='285.714285714286' stroke='#ccc'/><text x='72' y='289.714285714286' text-anchor='end'>2</text>
+<line x1='80' y1='238.571428571429' x2='600' y2='238.571428571429' stroke='#ccc'/><text x='72' y='242.571428571429' text-anchor='end'>3</text>
+<line x1='80' y1='191.428571428571' x2='600' y2='191.428571428571' stroke='#ccc'/><text x='72' y='195.428571428571' text-anchor='end'>4</text>
+<line x1='80' y1='144.285714285714' x2='600' y2='144.285714285714' stroke='#ccc'/><text x='72' y='148.285714285714' text-anchor='end'>5</text>
+<line x1='80' y1='97.1428571428572' x2='600' y2='97.1428571428572' stroke='#ccc'/><text x='72' y='101.142857142857' text-anchor='end'>6</text>
+<line x1='80' y1='50' x2='600' y2='50' stroke='#ccc'/><text x='72' y='54' text-anchor='end'>7</text>
+<line x1='120' y1='380' x2='120' y2='385' stroke='black'/><text x='120' y='400' text-anchor='middle'>1M</text>
+<line x1='230' y1='380' x2='230' y2='385' stroke='black'/><text x='230' y='400' text-anchor='middle'>10M</text>
+<line x1='340' y1='380' x2='340' y2='385' stroke='black'/><text x='340' y='400' text-anchor='middle'>100M</text>
+<line x1='450' y1='380' x2='450' y2='385' stroke='black'/><text x='450' y='400' text-anchor='middle'>500M</text>
+<line x1='560' y1='380' x2='560' y2='385' stroke='black'/><text x='560' y='400' text-anchor='middle'>1B</text>
+<polyline points='120,379.705781428571 230,376.951931428571 340,349.88651 450,229.113015714286 560,78.4787642857143' fill='none' stroke='#1f77b4' stroke-width='2'/>
+<line x1='120' y1='379.707242857143' x2='120' y2='379.70432' stroke='#444'/><circle cx='120' cy='379.705781428571' r='4.5' fill='#1f77b4'/><text x='128' y='371.705781428571' font-size='12'>0.006241</text>
+<line x1='230' y1='377.020571428571' x2='230' y2='376.883291428571' stroke='#444'/><circle cx='230' cy='376.951931428571' r='4.5' fill='#1f77b4'/><text x='238' y='368.951931428571' font-size='12'>0.064656</text>
+<line x1='340' y1='350.169838571429' x2='340' y2='349.603181428571' stroke='#444'/><circle cx='340' cy='349.88651' r='4.5' fill='#1f77b4'/><text x='348' y='341.88651' font-size='12'>0.638771</text>
+<line x1='450' y1='230.944892857143' x2='450' y2='227.281138571429' stroke='#444'/><circle cx='450' cy='229.113015714286' r='4.5' fill='#1f77b4'/><text x='458' y='221.113015714286' font-size='12'>3.200633</text>
+<line x1='560' y1='81.9355614285714' x2='560' y2='75.0219671428571' stroke='#444'/><circle cx='560' cy='78.4787642857143' r='4.5' fill='#1f77b4'/><text x='568' y='70.4787642857143' font-size='12'>6.395905</text>
+<rect x='80' y='50' width='520' height='330' fill='none' stroke='black'/>
+<text x='340' y='428' text-anchor='middle'>Número de avaliações (Calls)</text><text transform='translate(25,215) rotate(-90)' text-anchor='middle'>Tempo médio de execução (s)</text>
+<text x='340' y='455' text-anchor='middle' font-size='12' fill='#555'>Média de cinco execuções; barras = desvio-padrão amostral</text></svg>
