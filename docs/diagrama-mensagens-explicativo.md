@@ -1,5 +1,7 @@
 # **Explicação do diagrama de sequência que ilustra a nossa paralelização utilizando MPI para o Monte Carlo Simples da GSL**
 
+   ![Diagrama de troca de mensagens MPI](diagrama-de-mensagens-mpi-monte-carlo-GSI059.drawio.png)
+   
 **Escopo de cálculo**
 
 Primeiramente, é importante ressaltar que a integral é a área embaixo de uma curva. Com isso, esse trabalho calcula a área embaixo da curva f(x) = 1 / (1+ x²), com x no intervalo de 0 a 1, cujo valor exato corresponde a π/4, isto é, 0,785398.
@@ -18,7 +20,7 @@ Para o cálculo da forma geométrica retângulo, realiza-se a operação largura
 
 4. Multiplica a média pela largura do intervalo, sendo que, em nosso escopo, é 1. O resultado dessa operação corresponde à área almejada.
 
-Com apenas 3 pontos, x = 0,2 dá altura 0,96; x = 0,7 dá 0,67; x = 0,5 dá 0,80. A média é 0,81, valor próximo de 0,785. Com milhões de pontos, o resultado se aproxima muito do exato. Quanto mais pontos são usados, mais os sorteios se equilibram. Os que caem em pontos que puxam a média para cima, que podemos chamar de “azarados”, são compensados pelos que a puxam para baixo. A *GNU Scientific Library* (GSL), além de devolver o resultado, traz consigo a estimativa do erro, identificado como sigma. Para reduzir esse erro pela metade, são necessários 4 vezes mais pontos.
+Com apenas 3 pontos, x = 0,2 dá altura 0,96; x = 0,7 dá 0,67; x = 0,5 dá 0,80. A média é 0,81, valor próximo de 0,785. Com milhões de pontos, o resultado se aproxima muito do exato. Quanto mais pontos são usados, mais os sorteios se equilibram. Os que caem em pontos que puxam a média para cima, que podemos chamar de "azarados", são compensados pelos que a puxam para baixo. A *GNU Scientific Library* (GSL), além de devolver o resultado, traz consigo a estimativa do erro, identificado como sigma. Para reduzir esse erro pela metade, são necessários 4 vezes mais pontos.
 
 **Por que paralelizar?**
 
@@ -28,20 +30,32 @@ Cada ponto é sorteado e calculado sem ter a dependência de nenhum outro. Logo,
 
 O computador gera números pseudoaleatórios a partir de um número inicial, que é a semente (*seed*). Assim, a mesma semente gera deterministicamente a mesma sequência de números. Tendo isso em vista, caso todos os processos utilizassem a mesma semente, todos fariam o sorteio dos mesmos pontos, obtendo um trabalho repetido. Desse modo, definiu-se que cada processo utiliza uma semente distinta, igual a 42 + o rank.
 
+A semente é definida depois que o processo descobre o seu rank, com o MPI_Comm_rank(). Seguimos o padrão usado pelo professor na aula (semente fixa + número da thread), o que torna os resultados reprodutíveis. Para variar, a semente base pode ser trocada pela variável de ambiente GSL_RNG_SEED, da própria GSL.
+
+**Rotina paralela e programa de teste**
+
+A versão MPI é dividida em duas partes. A rotina paralela faz apenas o cálculo: cada processo chama a gsl_monte_plain_integrate com N/P pontos, os resultados são combinados com o MPI_Reduce e o rank 0 calcula a média e o erro. O programa de teste, que é o main, chama essa rotina e faz a barreira e a medição do tempo em volta dela, assim como a versão serial faz com a gsl_monte_plain_integrate. Dessa forma, quem quiser apenas calcular a integral não precisa da barreira nem da medição.
+
 **Passo a passo do diagrama**
 
-O diagrama evidencia 4 processos, do rank 0 ao 3, com o tempo correndo de cima para baixo.
+O diagrama evidencia 4 processos, do rank 0 ao 3, com o tempo correndo de cima para baixo. Os passos com o mesmo número acontecem ao mesmo tempo em todos os processos, e o fragmento par indica que eles são executados em paralelo, sem ordem definida entre os ranks.
 
-1. **MPI_Init e semente:** cada processo inicia o MPI e define sua semente.
-2. **MPI_Barrier:** os processos esperam todos os demais chegarem, com o propósito de iniciarem juntos, levando em consideração uma medição de tempo justa.
-3. **MPI_Wtime, início**: o rank 0 marca o horário em que começou.
-4. **integra (N/4):** cada processo calcula seus respectivos N/4 pontos com a gsl_monte_plain_integrate. Aqui é onde se realiza a parte paralela.
-5. **MPI_Reduce:** cada processo envia seu resultado e erro ao quadrado ao rank 0, o qual soma todos, incluindo a si próprio, que também participa. Destaca-se aqui como a única comunicação do programa.
-6. **MPI_Wtime, fim**: o rank 0 marca o horário de fim. O tempo é a diferença. O tempo entre os passos 3 e 6 é usado para calcular o speedup, S = T1/Tp.
-7. **Calcula média e erro:** o resultado final é obtido pela soma de resultados dividida por P. O erro final é calculado como a raiz da soma dos erros ao quadrado, dividida por P. Os erros não são somados diretamente porque se compensam em parte. Somá-los direto suporia que todos erraram para o mesmo lado, o que exageraria o erro final. Assim, a versão paralela tem o mesmo erro da serial, já que o total de pontos é o mesmo.
-8. **MPI_Finalize:** todos encerram o MPI.
+1. **MPI_Init:** cada processo inicia o ambiente MPI.
+2. **MPI_Comm_rank e MPI_Comm_size:** cada processo descobre o seu número (rank) e o total de processos (P).
+3. **Semente:** cada processo define a sua semente, igual a 42 + rank.
+4. **MPI_Barrier:** os processos esperam todos os demais chegarem, para iniciarem juntos e garantir uma medição de tempo justa. Como a barreira acontece antes do MPI_Wtime de início, o custo dela não entra no tempo medido.
+5. **MPI_Wtime, início:** o rank 0 marca o horário em que começou.
+6. **gsl_monte_plain_integrate (N/P):** cada processo calcula os seus N/P pontos. Aqui é onde se realiza a parte paralela.
+7. **MPI_Reduce:** cada processo envia o seu resultado e o seu erro ao quadrado ao rank 0, que soma todos, incluindo os seus próprios. Essa é a única comunicação do programa.
+8. **Calcula média e erro:** o resultado final é a soma dos resultados dividida por P. O erro final é a raiz da soma dos erros ao quadrado, dividida por P. Os erros não são somados diretamente porque se compensam em parte. Somá-los direto suporia que todos erraram para o mesmo lado, o que exageraria o erro final. Assim, a versão paralela tem o mesmo erro da serial, já que o total de pontos é o mesmo.
+9. **MPI_Wtime, fim:** o rank 0 marca o horário de fim. O tempo entre os passos 5 e 9 é usado para calcular o speedup, S = T1/Tp.
+10. **MPI_Finalize:** todos encerram o MPI.
 
-As setas utilizadas, conforme padrão UML e documentação da IBM (https://www.ibm.com/docs/pt-br/rsas/7.5.0?topic=diagrams-messages-in-uml), foram: 
+Os passos 6 a 8 formam a rotina paralela. Os demais pertencem ao programa de teste.
+
+As notações utilizadas, conforme padrão UML e documentação da IBM (https://www.ibm.com/docs/pt-br/rsas/7.5.0?topic=diagrams-messages-in-uml), foram:
 
 * **Setas de ponta cheia:** para representar as mensagens de um processo para ele mesmo, sendo operações locais.
-* **Setas de ponta aberta**: para representar as mensagens assíncronas do Reduce, em que o processo envia o resultado e segue, sem esperar resposta.
+* **Setas de ponta aberta:** para representar as mensagens assíncronas do Reduce, em que o processo envia o resultado e segue, sem esperar resposta.
+* **Fragmento par:** retângulo que indica que os trechos dentro dele são executados em paralelo, sem ordem definida entre os ranks.
+* **Notas:** retângulos com o canto dobrado, usados para a barreira, o encerramento e a indicação da rotina paralela.
