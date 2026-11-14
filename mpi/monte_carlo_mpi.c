@@ -33,8 +33,17 @@ void integra_mpi (size_t calls_total, gsl_rng *r, int rank, int size,
 
   gsl_monte_plain_free (s);
 
-  double err2_local = err_local * err_local;
-  double soma_res = 0.0, soma_err2 = 0.0;
+  // Envia o resultado e o erro ao quadrado num unico Reduce; o rank 0 soma tudo.
+  double local[2] = { res_local, err_local * err_local };
+  double soma[2] = { 0.0, 0.0 };
+  MPI_Reduce (local, soma, 2, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+  // Media dos resultados; erro = raiz da soma dos erros ao quadrado / P.
+  if (rank == 0)
+    {
+      *resultado = soma[0] / size;
+      *erro = sqrt (soma[1]) / size;
+    }
 }
 
 int main (int argc, char **argv)
@@ -56,11 +65,13 @@ int main (int argc, char **argv)
 
   double res = 0.0, err = 0.0;
 
-  double t0 = 0.0;
+  // Espera todos os processos para comecarem juntos; a barreira fica fora do tempo.
+  MPI_Barrier (MPI_COMM_WORLD);
+  double t0 = MPI_Wtime ();
 
   integra_mpi (calls, r, rank, size, &res, &err);
 
-  double t1 = 0.0;
+  double t1 = MPI_Wtime ();
 
   if (rank == 0)
     {
