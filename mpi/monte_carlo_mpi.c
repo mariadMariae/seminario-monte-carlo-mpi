@@ -57,6 +57,15 @@ int main (int argc, char **argv)
 
   size_t calls = (argc > 1) ? strtoull (argv[1], NULL, 10) : 10000000;
 
+  // Mantem a divisao igual e garante amostras suficientes para estimar sigma.
+  if (calls % size != 0 || calls / size < 2)
+    {
+      if (rank == 0)
+        printf ("Erro: calls precisa ser divisivel por P e dar pelo menos 2 pontos por processo\n");
+      MPI_Finalize ();
+      return 1;
+    }
+
   // Usa uma semente reproduzível e diferente em cada processo.
   gsl_rng_env_setup ();
   gsl_rng *r = gsl_rng_alloc (gsl_rng_default);
